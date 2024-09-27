@@ -12,6 +12,7 @@
 
 #define TICK_NUM 100
 volatile size_t num=0;
+static int PRINT_NUM = 0;
 
 static void print_ticks() {
     cprintf("%d ticks\n", TICK_NUM);
@@ -106,12 +107,20 @@ void interrupt_handler(struct trapframe *tf) {
             // In fact, Call sbi_set_timer will clear STIP, or you can clear it
             // directly.
             // cprintf("Supervisor timer interrupt\n");
-             /* LAB1 EXERCISE2   YOUR CODE :  */
-            /*(1)设置下次时钟中断- clock_set_next_event()
-             *(2)计数器（ticks）加一
-             *(3)当计数器加到100的时候，我们会输出一个`100ticks`表示我们触发了100次时钟中断，同时打印次数（num）加一
-            * (4)判断打印次数，当打印次数为10时，调用<sbi.h>中的关机函数关机
-            */
+             /* LAB1 EXERCISE2   2210652 :  */
+            clock_set_next_event();
+            ticks++;
+            if (ticks % TICK_NUM == 0)
+            {
+                print_ticks();
+                PRINT_NUM++;
+                if (PRINT_NUM == 10)
+                {
+                    sbi_shutdown();
+                }
+            }
+            cprintf("Supervisor timer interrupt\n");
+            // 下次时钟中断clock_set_next_event(),判断打印次数，当打印次数为10时，调用<sbi.h>中的关机函数关机
             break;
         case IRQ_H_TIMER:
             cprintf("Hypervisor software interrupt\n");
@@ -144,8 +153,12 @@ void exception_handler(struct trapframe *tf) {
         case CAUSE_FAULT_FETCH:
             break;
         case CAUSE_ILLEGAL_INSTRUCTION:
-             // 非法指令异常处理
-             /* LAB1 CHALLENGE3   YOUR CODE :  */
+            // 非法指令异常处理
+            /* LAB1 CHALLENGE3   2210652 :  */
+            cprintf("Exception type : Illegal instruction \n");
+            cprintf("Illegal instruction exception at 0x%016llx\n", tf->epc);
+            tf->epc += 4;
+            // 采用0x%016llx格式化字符串，用于打印16位十六进制数，0表示空位补零，16表示总宽度为 16 个字符，llx表示以长长整型十六进制数形式输出。。这个位置是异常指令的地址,以tf->epc作为参数。
             /*(1)输出指令异常类型（ Illegal instruction）
              *(2)输出异常指令地址
              *(3)更新 tf->epc寄存器
@@ -153,7 +166,10 @@ void exception_handler(struct trapframe *tf) {
             break;
         case CAUSE_BREAKPOINT:
             //断点异常处理
-            /* LAB1 CHALLLENGE3   YOUR CODE :  */
+            /* LAB1 CHALLLENGE3   2210652 :  */
+            cprintf("Exception type: breakpoint \n");
+            cprintf("ebreak caught at 0x%016llx\n", tf->epc);
+            tf->epc += 2; // ebreak指令长度为2个字节
             /*(1)输出指令异常类型（ breakpoint）
              *(2)输出异常指令地址
              *(3)更新 tf->epc寄存器
