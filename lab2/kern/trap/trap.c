@@ -9,7 +9,9 @@
 #include <stdio.h>
 #include <trap.h>
 
-#define TICK_NUM 100
+#define TICK_NUM 10000
+
+
 
 static void print_ticks() {
     cprintf("%d ticks\n", TICK_NUM);
